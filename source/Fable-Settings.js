@@ -72,6 +72,13 @@ var FableSettings = function()
 			return _Settings;
 		};
 
+		// Fill in settings gaps without overwriting settings that are already there
+		var fill = function(pSettings)
+		{
+			_Settings = libUnderscore.extend((typeof(pSettings) === 'object') ? pSettings : {}, _Settings);
+			return _Settings;
+		};
+
 		// Merge in the defaults, which we expect to be the minimum valid working set
 		merge(_SettingsDefaults);
 
@@ -100,6 +107,8 @@ var FableSettings = function()
 		var tmpNewFableSettingsObject = (
 		{
 			merge: merge,
+			fill: fill,
+
 			new: createNew
 		});
 

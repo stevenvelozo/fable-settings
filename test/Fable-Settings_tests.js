@@ -92,6 +92,17 @@ suite
 						// Be sure defaults carry through
 						Expect(tmpFableSettings.settings.ProductVersion)
 							.to.equal('0.0.0');
+
+						// Test the object fill method.
+						tmpFableSettings.fill({Product:'DontOverwriteMe',SomeFancySetting:'CreateMe'});
+						// Fill should have ignored overwriting existing settings
+						Expect(tmpFableSettings.settings.Product)
+							.to.equal('NewSettingsObject');
+						// Fill should have filled-in gaps in the union
+						Expect(tmpFableSettings.settings.SomeFancySetting)
+							.to.equal('CreateMe');
+						// Exercise filling without a good value
+						tmpFableSettings.fill();
 					}
 				);
 				test
