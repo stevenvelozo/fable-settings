@@ -85,6 +85,22 @@ var FableSettings = function()
 		// Now merge the passed-in parameter with the settings defaults to create a "base" settings object
 		_SettingsBase = merge(pFromParameters);
 
+		if (_Settings.DefaultConfigFile)
+		{
+			try
+			{
+				// If there is a DEFAULT configuration file, try to load and merge it.
+				merge(require(_SettingsBase.DefaultConfigFile));
+			}
+			catch (pException)
+			{
+				// Why this?  Often for an app we want settings to work out of the box, but
+				// would potentially want to have a config file for complex settings.
+				console.log('Fable-Settings Warning: Default configuration file specified but there was a problem loading it.  Falling back to base.');
+				console.log('     Loading Exception: '+pException);
+			}
+		}
+
 		if (_Settings.ConfigFile)
 		{
 			try
