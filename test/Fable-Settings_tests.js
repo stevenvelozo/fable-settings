@@ -121,6 +121,20 @@ suite
 				);
 				test
 				(
+					'loading settings from a nonexistant DEFAULT file',
+					function()
+					{
+						var tmpFableSettings = require('../source/Fable-Settings.js').new({DefaultConfigFile:__dirname+'/NO_SETTINGS_HERE.json'});
+						Expect(tmpFableSettings).to.have.a.property('settings')
+							.that.is.a('object');
+						Expect(tmpFableSettings.settings).to.have.a.property('Product')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.Product)
+							.to.equal('Fable');
+					}
+				);
+				test
+				(
 					'loading settings from a file',
 					function()
 					{
