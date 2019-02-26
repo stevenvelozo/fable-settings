@@ -1,6 +1,6 @@
 {
   "name": "fable-settings",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple, tolerant configuration chain.",
   "main": "source/Fable-Settings.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "mocha": "5.2.0"
   },
   "dependencies": {
+    "match-all": "^1.2.5",
     "underscore": "1.9.1"
   }
 }

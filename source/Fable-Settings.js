@@ -7,7 +7,8 @@
 * @module Fable Settings
 */
 // Underscore for utility
-var libUnderscore = require('underscore');
+const libUnderscore = require('underscore');
+const matchAll = require("match-all");
 
 /**
 * Fable Solution Settings
@@ -64,11 +65,44 @@ var FableSettings = function()
 		var _Settings;
 		var _SettingsBase;
 
+		// Resolve (recursive) any environment variables found in settings object.
+		var resolve_env = function(pSettings)
+		{
+			for(var k in pSettings)
+			{
+				if (typeof(pSettings[k]) === 'object')
+				{
+					resolve_env(pSettings[k]);
+				}
+				else if (typeof(pSettings[k]) === 'string')
+				{
+					if (pSettings[k].indexOf('${') >= 0)
+					{
+						//pick out and resolve env variables from the settings value.
+						var matches = matchAll(pSettings[k], /\$\{(.*?)\}/g).toArray();
+						matches.forEach((m)=>
+						{
+							//format: VAR_NAME|DEFAULT_VALUE
+							var parts = m.split('|');
+							var resolvedValue = process.env[parts[0]] || '';
+							if (!resolvedValue && parts.length>1)
+							{
+								resolvedValue = parts[1];
+							}
+							
+							pSettings[k] = pSettings[k].replace('${' + m + '}', resolvedValue);
+						});
+					}
+				}
+			}
+		}
+
 		// Merge some new object into the existing settings.
 		var merge = function(pSettings)
 		{
 			// Laziliy initialize settings.
 			_Settings = libUnderscore.extend((typeof(_Settings) === 'object') ? _Settings : {}, (typeof(pSettings) === 'object') ? pSettings : {});
+			resolve_env(_Settings);
 			return _Settings;
 		};
 
@@ -124,6 +158,7 @@ var FableSettings = function()
 		{
 			merge: merge,
 			fill: fill,
+			resolve_env: resolve_env,
 
 			new: createNew
 		});

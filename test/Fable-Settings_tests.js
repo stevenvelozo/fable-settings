@@ -167,6 +167,26 @@ suite
 							.to.equal('Fable');
 					}
 				);
+				test
+				(
+					'resolve environment variables',
+					function()
+					{
+						process.env['NOT_DEFAULT'] = 'found_value';
+
+						var tmpFableSettings = require('../source/Fable-Settings.js').new(
+							{
+								DefaultConfigFile:__dirname+'/DefaultExampleSettings.json',
+								ConfigFile:__dirname+'/ExampleSettings.json'
+							});
+						Expect(tmpFableSettings).to.have.a.property('settings')
+							.that.is.a('object');
+						Expect(tmpFableSettings.settings).to.have.a.property('Environment')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.Environment)
+							.to.equal('found_value-default');
+					}
+				);
 			}
 		);
 	}
