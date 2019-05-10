@@ -3,7 +3,7 @@ Fable Settings
 
 A very simple, tolerant settings loading library.
 
-[![Code Climate](https://codeclimate.com/github/stevenvelozo/fable-settings/badges/gpa.svg)](https://codeclimate.com/github/stevenvelozo/fable-settings) [![Coverage Status](https://coveralls.io/repos/stevenvelozo/fable-settings/badge.svg?branch=master)](https://coveralls.io/r/stevenvelozo/fable-settings?branch=master) [![Build Status](https://travis-ci.org/stevenvelozo/fable-settings.svg?branch=master)](https://travis-ci.org/stevenvelozo/fable-settings) [![Dependency Status](https://david-dm.org/stevenvelozo/fable-settings.svg)](https://david-dm.org/stevenvelozo/fable-settings) [![devDependency Status](https://david-dm.org/stevenvelozo/fable-settings/dev-status.svg)](https://david-dm.org/stevenvelozo/fable-settings#info=devDependencies)
+[![Coverage Status](https://coveralls.io/repos/stevenvelozo/fable-settings/badge.svg?branch=master)](https://coveralls.io/r/stevenvelozo/fable-settings?branch=master) [![Build Status](https://travis-ci.org/stevenvelozo/fable-settings.svg?branch=master)](https://travis-ci.org/stevenvelozo/fable-settings)
 
 Why
 ---
