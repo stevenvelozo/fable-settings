@@ -50,7 +50,7 @@ suite
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings.Product)
-							.to.equal('Fable');
+							.to.equal('ApplicationNameHere');
 					}
 				);
 			}
@@ -85,7 +85,7 @@ suite
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Product)
-							.to.equal('Fable');
+							.to.equal('ApplicationNameHere');
 						tmpFableSettings.merge({Product:'NewSettingsObject'});
 						Expect(tmpFableSettings.settings.Product)
 							.to.equal('NewSettingsObject');
@@ -103,6 +103,7 @@ suite
 							.to.equal('CreateMe');
 						// Exercise filling without a good value
 						tmpFableSettings.fill();
+							console.log('1')
 					}
 				);
 				test
@@ -130,7 +131,7 @@ suite
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Product)
-							.to.equal('Fable');
+							.to.equal('ApplicationNameHere');
 					}
 				);
 				test
@@ -164,7 +165,7 @@ suite
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Product)
-							.to.equal('Fable');
+							.to.equal('ApplicationNameHere');
 					}
 				);
 			}
