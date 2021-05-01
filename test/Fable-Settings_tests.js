@@ -168,6 +168,55 @@ suite
 							.to.equal('ApplicationNameHere');
 					}
 				);
+				test
+				(
+					'resolve environment variables',
+					function()
+					{
+						process.env['NOT_DEFAULT'] = 'found_value';
+
+						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						{
+							DefaultConfigFile: `${__dirname}/DefaultExampleSettings.json`,
+							ConfigFile: `${__dirname}/ExampleSettings.json`
+						});
+						Expect(tmpFableSettings).to.have.a.property('settings')
+							.that.is.a('object');
+						Expect(tmpFableSettings.settings).to.have.a.property('Environment')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.Environment)
+							.to.equal('found_value-default');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvArray')
+							.that.is.an('array');
+						Expect(tmpFableSettings.settings.EnvArray)
+							.to.deep.equal(['found_value', 'default']);
+					}
+				);
+				test
+				(
+					'ignores environment variables if disabled',
+					function()
+					{
+						process.env['NOT_DEFAULT'] = 'found_value';
+
+						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						{
+							NoEnvReplacement: true,
+							DefaultConfigFile: `${__dirname}/DefaultExampleSettings.json`,
+							ConfigFile: `${__dirname}/ExampleSettings.json`
+						});
+						Expect(tmpFableSettings).to.have.a.property('settings')
+							.that.is.a('object');
+						Expect(tmpFableSettings.settings).to.have.a.property('Environment')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.Environment)
+							.to.equal('${NOT_DEFAULT|default}-${USE_DEFAULT|default}');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvArray')
+							.that.is.an('array');
+						Expect(tmpFableSettings.settings.EnvArray)
+							.to.deep.equal(['${NOT_DEFAULT|default}', '${USE_DEFAULT|default}']);
+					}
+				);
 			}
 		);
 	}

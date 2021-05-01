@@ -1,11 +1,11 @@
 {
   "name": "fable-settings",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A simple, tolerant configuration chain.",
   "main": "source/Fable-Settings.js",
   "scripts": {
     "start": "node source/Fable-Settings.js",
-    "coverage": "./node_modules/nyc/bin/nyc.js --reporter=lcov --reporter=text-lcov ./node_modules/mocha/bin/_mocha -- -u tdd -R spec",
+    "coverage": "nyc npm run test --reporter=lcov",
     "test": "./node_modules/mocha/bin/_mocha -u tdd -R spec"
   },
   "repository": {
@@ -37,5 +37,7 @@
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "match-all": "^1.2.6"
+  }
 }

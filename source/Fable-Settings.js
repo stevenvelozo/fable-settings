@@ -7,6 +7,9 @@
 * @module Fable Settings
 */
 
+// needed since String.matchAll wasn't added to node until v12
+const libMatchAll = require('match-all');
+
 /**
 * Fable Solution Settings
 *
@@ -22,6 +25,9 @@ class FableSettings
 
 		// Construct a new settings object
 		let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
+
+		// default environment variable templating to on
+		this._PerformEnvTemplating = !tmpSettings || tmpSettings.NoEnvReplacement !== true;
 
 		// The base settings object (what they were on initialization, before other actors have altered them)
 		this.base = JSON.parse(JSON.stringify(tmpSettings));
@@ -64,7 +70,41 @@ class FableSettings
 	// Build a default settings object.  Use the JSON jimmy to ensure it is always a new object.
 	buildDefaultSettings()
 	{
-		return JSON.parse(JSON.stringify(require('./Fable-Settings-Default')))
+		return JSON.parse(JSON.stringify(require('./Fable-Settings-Default')));
+	}
+
+
+	// Resolve (recursive) any environment variables found in settings object.
+	_resolveEnv(pSettings)
+	{
+		for (const tmpKey in pSettings)
+		{
+			const tmpValue = pSettings[tmpKey];
+			if (typeof(tmpValue) === 'object') // && !Array.isArray(tmpValue))
+			{
+				this._resolveEnv(tmpValue);
+			}
+			else if (typeof(tmpValue) === 'string')
+			{
+				if (tmpValue.indexOf('${') >= 0)
+				{
+					//pick out and resolve env constiables from the settings value.
+					const tmpMatches = libMatchAll(tmpValue, /\$\{(.*?)\}/g).toArray();
+					tmpMatches.forEach((tmpMatch) =>
+					{
+						//format: VAR_NAME|DEFAULT_VALUE
+						const tmpParts = tmpMatch.split('|');
+						let tmpResolvedValue = process.env[tmpParts[0]] || '';
+						if (!tmpResolvedValue && tmpParts.length > 1)
+						{
+							tmpResolvedValue = tmpParts[1];
+						}
+
+						pSettings[tmpKey] = pSettings[tmpKey].replace('${' + tmpMatch + '}', tmpResolvedValue);
+					});
+				}
+			}
+		}
 	}
 
 	// Merge some new object into the existing settings.
@@ -75,7 +115,14 @@ class FableSettings
 		// Default to the settings object if none is passed in for the merge.
 		let tmpSettingsTo = (typeof(pSettingsTo) === 'object') ? pSettingsTo : this.settings;
 
-		tmpSettingsTo = Object.assign(tmpSettingsTo, tmpSettingsFrom);
+		// do not mutate the From object property values
+		let tmpSettingsFromCopy = JSON.parse(JSON.stringify(tmpSettingsFrom));
+		tmpSettingsTo = Object.assign(tmpSettingsTo, tmpSettingsFromCopy);
+
+		if (this._PerformEnvTemplating)
+		{
+			this._resolveEnv(tmpSettingsTo);
+		}
 
 		return tmpSettingsTo;
 	}
