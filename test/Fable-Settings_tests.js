@@ -94,7 +94,19 @@ suite
 							.to.equal('0.0.0');
 
 						// Test the object fill method.
-						tmpFableSettings.fill({Product:'DontOverwriteMe',SomeFancySetting:'CreateMe'});
+						tmpFableSettings.fill({ ComplexMerge: { DefaultKey: 'DefaultValue' } });
+						const toFill =
+						{
+							Product:'DontOverwriteMe',
+							SomeFancySetting:'CreateMe',
+							ComplexMerge:
+							{
+								DefaultKey: 'IgnoredValue',
+								NewKey: 'NewValue',
+							},
+						};
+						const fillParameter = JSON.parse(JSON.stringify(toFill));
+						tmpFableSettings.fill(fillParameter);
 						// Fill should have ignored overwriting existing settings
 						Expect(tmpFableSettings.settings.Product)
 							.to.equal('NewSettingsObject');
@@ -103,7 +115,13 @@ suite
 							.to.equal('CreateMe');
 						// Exercise filling without a good value
 						tmpFableSettings.fill();
-							console.log('1')
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							DefaultKey: 'DefaultValue',
+							NewKey: 'NewValue',
+						});
+						// ensure we didn't mutate the fill input
+						Expect(toFill).to.deep.equal(fillParameter);
 					}
 				);
 				test
@@ -118,6 +136,13 @@ suite
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Product)
 							.to.equal('BestProductEver - DEFAULT');
+						Expect(tmpFableSettings.settings).to.have.a.property('ComplexMerge')
+							.that.is.an('object');
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							DefaultKey: 'DefaultValue',
+							OverriddenKey: 'IrrelevantValue',
+						});
 					}
 				);
 				test
@@ -152,6 +177,14 @@ suite
 							.to.equal('BestProductEver');
 						Expect(tmpFableSettings.settings.TestValue)
 							.to.equal('NOT_OVERIDDEN');
+						Expect(tmpFableSettings.settings).to.have.a.property('ComplexMerge')
+							.that.is.an('object');
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							DefaultKey: 'DefaultValue',
+							OverriddenKey: 'ImportantValue',
+							NewKey: 'NewValue',
+						});
 					}
 				);
 				test
@@ -190,6 +223,14 @@ suite
 							.that.is.an('array');
 						Expect(tmpFableSettings.settings.EnvArray)
 							.to.deep.equal(['found_value', 'default']);
+						Expect(tmpFableSettings.settings).to.have.a.property('ComplexMerge')
+							.that.is.an('object');
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							DefaultKey: 'DefaultValue',
+							OverriddenKey: 'ImportantValue',
+							NewKey: 'NewValue',
+						});
 					}
 				);
 				test
@@ -215,6 +256,14 @@ suite
 							.that.is.an('array');
 						Expect(tmpFableSettings.settings.EnvArray)
 							.to.deep.equal(['${NOT_DEFAULT|default}', '${USE_DEFAULT|default}']);
+						Expect(tmpFableSettings.settings).to.have.a.property('ComplexMerge')
+							.that.is.an('object');
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							DefaultKey: 'DefaultValue',
+							OverriddenKey: 'ImportantValue',
+							NewKey: 'NewValue',
+						});
 					}
 				);
 			}

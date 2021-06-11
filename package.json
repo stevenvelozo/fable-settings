@@ -1,6 +1,6 @@
 {
   "name": "fable-settings",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "A simple, tolerant configuration chain.",
   "main": "source/Fable-Settings.js",
   "scripts": {
