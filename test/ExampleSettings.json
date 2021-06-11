@@ -29,5 +29,10 @@
 			"ConnectionPoolLimit": 20
 		},
 
-	"LogStreams": [{"streamtype":"process.stdout", "level":"trace"}]
+	"LogStreams": [{"streamtype":"process.stdout", "level":"trace"}],
+	"ComplexMerge":
+	{
+		"NewKey": "NewValue",
+		"OverriddenKey": "ImportantValue"
+	}
 }

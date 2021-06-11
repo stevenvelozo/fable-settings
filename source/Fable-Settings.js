@@ -107,6 +107,41 @@ class FableSettings
 		}
 	}
 
+	/**
+	 * Check to see if a value is an object (but not an array).
+	 */
+	_isObject(value)
+	{
+		return typeof(value) === 'object' && !Array.isArray(value);
+	}
+
+	/**
+	 * Merge two plain objects. Keys that are objects in both will be merged property-wise.
+	 */
+	_deepMergeObjects(toObject, fromObject)
+	{
+		if (!fromObject || !this._isObject(fromObject))
+		{
+			return;
+		}
+		Object.keys(fromObject).forEach((key) =>
+		{
+			const fromValue = fromObject[key];
+			if (this._isObject(fromValue))
+			{
+				const toValue = toObject[key];
+				if (toValue && this._isObject(toValue))
+				{
+					// both are objects, so do a recursive merge
+					this._deepMergeObjects(toValue, fromValue);
+					return;
+				}
+			}
+			toObject[key] = fromValue;
+		});
+		return toObject;
+	}
+
 	// Merge some new object into the existing settings.
 	merge(pSettingsFrom, pSettingsTo)
 	{
@@ -117,7 +152,7 @@ class FableSettings
 
 		// do not mutate the From object property values
 		let tmpSettingsFromCopy = JSON.parse(JSON.stringify(tmpSettingsFrom));
-		tmpSettingsTo = Object.assign(tmpSettingsTo, tmpSettingsFromCopy);
+		tmpSettingsTo = this._deepMergeObjects(tmpSettingsTo, tmpSettingsFromCopy);
 
 		if (this._PerformEnvTemplating)
 		{
@@ -133,7 +168,10 @@ class FableSettings
 		// If an invalid settings from object is passed in (e.g. object constructor without passing in anything) this should still work
 		let tmpSettingsFrom = (typeof(pSettingsFrom) === 'object') ? pSettingsFrom : {};
 
-		this.settings = Object.assign(tmpSettingsFrom, this.settings);
+		// do not mutate the From object property values
+		let tmpSettingsFromCopy = JSON.parse(JSON.stringify(tmpSettingsFrom));
+
+		this.settings = this._deepMergeObjects(tmpSettingsFromCopy, this.settings);
 
 		return this.settings;
 	}
