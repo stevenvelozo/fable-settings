@@ -266,6 +266,42 @@ suite
 						});
 					}
 				);
+				test
+				(
+					'updates environment variable replacement config after merging',
+					function()
+					{
+						process.env['NOT_DEFAULT'] = 'found_value';
+
+						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						{
+							EnvReplaced: '${NOT_DEFAULT|waffle}',
+							DefaultConfigFile: `${__dirname}/DisableEnvReplacement.json`,
+							ConfigFile: `${__dirname}/ExampleSettings.json`
+						});
+						Expect(tmpFableSettings).to.have.a.property('settings')
+							.that.is.a('object');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvReplaced')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.EnvReplaced)
+							.to.equal('found_value');
+						Expect(tmpFableSettings.settings).to.have.a.property('Environment')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.Environment)
+							.to.equal('${NOT_DEFAULT|default}-${USE_DEFAULT|default}');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvArray')
+							.that.is.an('array');
+						Expect(tmpFableSettings.settings.EnvArray)
+							.to.deep.equal(['${NOT_DEFAULT|default}', '${USE_DEFAULT|default}']);
+						Expect(tmpFableSettings.settings).to.have.a.property('ComplexMerge')
+							.that.is.an('object');
+						Expect(tmpFableSettings.settings.ComplexMerge).to.deep.equal(
+						{
+							OverriddenKey: 'ImportantValue',
+							NewKey: 'NewValue',
+						});
+					}
+				);
 			}
 		);
 	}
