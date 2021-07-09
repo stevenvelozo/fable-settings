@@ -21,13 +21,13 @@ class FableSettings
 {
 	constructor(pFableSettings)
 	{
+		// set straight away so anything that uses it respects the initial setting
+		this._configureEnvTemplating(pFableSettings);
+
 		this.default = this.buildDefaultSettings();
 
 		// Construct a new settings object
 		let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
-
-		// default environment variable templating to on
-		this._PerformEnvTemplating = !tmpSettings || tmpSettings.NoEnvReplacement !== true;
 
 		// The base settings object (what they were on initialization, before other actors have altered them)
 		this.base = JSON.parse(JSON.stringify(tmpSettings));
@@ -73,6 +73,12 @@ class FableSettings
 		return JSON.parse(JSON.stringify(require('./Fable-Settings-Default')));
 	}
 
+	// Update the configuration for environment variable templating based on the current settings object
+	_configureEnvTemplating(pSettings)
+	{
+		// default environment variable templating to on
+		this._PerformEnvTemplating = !pSettings || pSettings.NoEnvReplacement !== true;
+	}
 
 	// Resolve (recursive) any environment variables found in settings object.
 	_resolveEnv(pSettings)
@@ -158,6 +164,8 @@ class FableSettings
 		{
 			this._resolveEnv(tmpSettingsTo);
 		}
+		// update env tempating config, since we just updated the config object, and it may have changed
+		this._configureEnvTemplating(tmpSettingsTo);
 
 		return tmpSettingsTo;
 	}
