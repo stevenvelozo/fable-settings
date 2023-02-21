@@ -1,120 +1,694 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-module.exports={
-	"Product": "ApplicationNameHere",
-	"ProductVersion": "0.0.0",
+(function (f) {
+  if (typeof exports === "object" && typeof module !== "undefined") {
+    module.exports = f();
+  } else if (typeof define === "function" && define.amd) {
+    define([], f);
+  } else {
+    var g;
+    if (typeof window !== "undefined") {
+      g = window;
+    } else if (typeof global !== "undefined") {
+      g = global;
+    } else if (typeof self !== "undefined") {
+      g = self;
+    } else {
+      g = this;
+    }
+    g.FableSettings = f();
+  }
+})(function () {
+  var define, module, exports;
+  return function () {
+    function r(e, n, t) {
+      function o(i, f) {
+        if (!n[i]) {
+          if (!e[i]) {
+            var c = "function" == typeof require && require;
+            if (!f && c) return c(i, !0);
+            if (u) return u(i, !0);
+            var a = new Error("Cannot find module '" + i + "'");
+            throw a.code = "MODULE_NOT_FOUND", a;
+          }
+          var p = n[i] = {
+            exports: {}
+          };
+          e[i][0].call(p.exports, function (r) {
+            var n = e[i][1][r];
+            return o(n || r);
+          }, p, p.exports, r, e, n, t);
+        }
+        return n[i].exports;
+      }
+      for (var u = "function" == typeof require && require, i = 0; i < t.length; i++) o(t[i]);
+      return o;
+    }
+    return r;
+  }()({
+    1: [function (require, module, exports) {
+      /**
+      * Precedent Meta-Templating
+      *
+      * @license     MIT
+      *
+      * @author      Steven Velozo <steven@velozo.com>
+      *
+      * @description Process text streams, parsing out meta-template expressions.
+      */
+      var libWordTree = require(`./WordTree.js`);
+      var libStringParser = require(`./StringParser.js`);
+      class Precedent {
+        /**
+         * Precedent Constructor
+         */
+        constructor() {
+          this.WordTree = new libWordTree();
+          this.StringParser = new libStringParser();
+          this.ParseTree = this.WordTree.ParseTree;
+        }
 
-	"ConfigFile": false,
+        /**
+         * Add a Pattern to the Parse Tree
+         * @method addPattern
+         * @param {Object} pTree - A node on the parse tree to push the characters into
+         * @param {string} pPattern - The string to add to the tree
+         * @param {number} pIndex - callback function
+         * @return {bool} True if adding the pattern was successful
+         */
+        addPattern(pPatternStart, pPatternEnd, pParser) {
+          return this.WordTree.addPattern(pPatternStart, pPatternEnd, pParser);
+        }
 
-	"LogStreams":
-	[
-		{
-			"level": "trace"
-		}
-	]
-}
+        /**
+         * Parse a string with the existing parse tree
+         * @method parseString
+         * @param {string} pString - The string to parse
+         * @return {string} The result from the parser
+         */
+        parseString(pString) {
+          return this.StringParser.parseString(pString, this.ParseTree);
+        }
+      }
+      module.exports = Precedent;
+    }, {
+      "./StringParser.js": 2,
+      "./WordTree.js": 3
+    }],
+    2: [function (require, module, exports) {
+      /**
+      * String Parser
+      *
+      * @license     MIT
+      *
+      * @author      Steven Velozo <steven@velozo.com>
+      *
+      * @description Parse a string, properly processing each matched token in the word tree.
+      */
 
-},{}],2:[function(require,module,exports){
-/**
-* Fable Settings Add-on
-*
-* @license MIT
-*
-* @author Steven Velozo <steven@velozo.com>
-* @module Fable Settings
-*/
+      class StringParser {
+        /**
+         * StringParser Constructor
+         */
+        constructor() {}
 
-/**
-* Fable Solution Settings
-*
-* @class FableSettings
-* @constructor
-*/
+        /**
+         * Create a fresh parsing state object to work with.
+         * @method newParserState
+         * @param {Object} pParseTree - A node on the parse tree to begin parsing from (usually root)
+         * @return {Object} A new parser state object for running a character parser on
+         * @private
+         */
+        newParserState(pParseTree) {
+          return {
+            ParseTree: pParseTree,
+            Output: '',
+            OutputBuffer: '',
+            Pattern: false,
+            PatternMatch: false,
+            PatternMatchOutputBuffer: ''
+          };
+        }
 
-class FableSettings
-{
-	constructor(pFableSettings)
-	{
-		this.default = this.buildDefaultSettings();
+        /**
+         * Assign a node of the parser tree to be the next potential match.
+         * If the node has a PatternEnd property, it is a valid match and supercedes the last valid match (or becomes the initial match).
+         * @method assignNode
+         * @param {Object} pNode - A node on the parse tree to assign
+         * @param {Object} pParserState - The state object for the current parsing task
+         * @private
+         */
+        assignNode(pNode, pParserState) {
+          pParserState.PatternMatch = pNode;
 
-		// Construct a new settings object
-		let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
+          // If the pattern has a END we can assume it has a parse function...
+          if (pParserState.PatternMatch.hasOwnProperty('PatternEnd')) {
+            // ... this is the legitimate start of a pattern.
+            pParserState.Pattern = pParserState.PatternMatch;
+          }
+        }
 
-		// The base settings object (what they were on initialization, before other actors have altered them)
-		this.base = JSON.parse(JSON.stringify(tmpSettings));
+        /**
+         * Append a character to the output buffer in the parser state.
+         * This output buffer is used when a potential match is being explored, or a match is being explored.
+         * @method appendOutputBuffer
+         * @param {string} pCharacter - The character to append
+         * @param {Object} pParserState - The state object for the current parsing task
+         * @private
+         */
+        appendOutputBuffer(pCharacter, pParserState) {
+          pParserState.OutputBuffer += pCharacter;
+        }
 
-		if (tmpSettings.DefaultConfigFile)
-		{
-			try
-			{
-				// If there is a DEFAULT configuration file, try to load and merge it.
-				tmpSettings = this.merge(require(tmpSettings.DefaultConfigFile), tmpSettings);
-			}
-			catch (pException)
-			{
-				// Why this?  Often for an app we want settings to work out of the box, but
-				// would potentially want to have a config file for complex settings.
-				console.log('Fable-Settings Warning: Default configuration file specified but there was a problem loading it.  Falling back to base.');
-				console.log('     Loading Exception: '+pException);
-			}
-		}
+        /**
+         * Flush the output buffer to the output and clear it.
+         * @method flushOutputBuffer
+         * @param {Object} pParserState - The state object for the current parsing task
+         * @private
+         */
+        flushOutputBuffer(pParserState) {
+          pParserState.Output += pParserState.OutputBuffer;
+          pParserState.OutputBuffer = '';
+        }
 
-		if (tmpSettings.ConfigFile)
-		{
-			try
-			{
-				// If there is a configuration file, try to load and merge it.
-				tmpSettings = this.merge(require(tmpSettings.ConfigFile), tmpSettings);
-			}
-			catch (pException)
-			{
-				// Why this?  Often for an app we want settings to work out of the box, but
-				// would potentially want to have a config file for complex settings.
-				console.log('Fable-Settings Warning: Configuration file specified but there was a problem loading it.  Falling back to base.');
-				console.log('     Loading Exception: '+pException);
-			}
-		}
+        /**
+         * Check if the pattern has ended.  If it has, properly flush the buffer and start looking for new patterns.
+         * @method checkPatternEnd
+         * @param {Object} pParserState - The state object for the current parsing task
+         * @private
+         */
+        checkPatternEnd(pParserState) {
+          if (pParserState.OutputBuffer.length >= pParserState.Pattern.PatternEnd.length + pParserState.Pattern.PatternStart.length && pParserState.OutputBuffer.substr(-pParserState.Pattern.PatternEnd.length) === pParserState.Pattern.PatternEnd) {
+            // ... this is the end of a pattern, cut off the end tag and parse it.
+            // Trim the start and end tags off the output buffer now
+            pParserState.OutputBuffer = pParserState.Pattern.Parse(pParserState.OutputBuffer.substr(pParserState.Pattern.PatternStart.length, pParserState.OutputBuffer.length - (pParserState.Pattern.PatternStart.length + pParserState.Pattern.PatternEnd.length)));
+            // Flush the output buffer.
+            this.flushOutputBuffer(pParserState);
+            // End pattern mode
+            pParserState.Pattern = false;
+            pParserState.PatternMatch = false;
+          }
+        }
 
-		this.settings = tmpSettings;
-	}
+        /**
+         * Parse a character in the buffer.
+         * @method parseCharacter
+         * @param {string} pCharacter - The character to append
+         * @param {Object} pParserState - The state object for the current parsing task
+         * @private
+         */
+        parseCharacter(pCharacter, pParserState) {
+          // (1) If we aren't in a pattern match, and we aren't potentially matching, and this may be the start of a new pattern....
+          if (!pParserState.PatternMatch && pParserState.ParseTree.hasOwnProperty(pCharacter)) {
+            // ... assign the node as the matched node.
+            this.assignNode(pParserState.ParseTree[pCharacter], pParserState);
+            this.appendOutputBuffer(pCharacter, pParserState);
+          }
+          // (2) If we are in a pattern match (actively seeing if this is part of a new pattern token)
+          else if (pParserState.PatternMatch) {
+            // If the pattern has a subpattern with this key
+            if (pParserState.PatternMatch.hasOwnProperty(pCharacter)) {
+              // Continue matching patterns.
+              this.assignNode(pParserState.PatternMatch[pCharacter], pParserState);
+            }
+            this.appendOutputBuffer(pCharacter, pParserState);
+            if (pParserState.Pattern) {
+              // ... Check if this is the end of the pattern (if we are matching a valid pattern)...
+              this.checkPatternEnd(pParserState);
+            }
+          }
+          // (3) If we aren't in a pattern match or pattern, and this isn't the start of a new pattern (RAW mode)....
+          else {
+            pParserState.Output += pCharacter;
+          }
+        }
 
-	// Build a default settings object.  Use the JSON jimmy to ensure it is always a new object.
-	buildDefaultSettings()
-	{
-		return JSON.parse(JSON.stringify(require('./Fable-Settings-Default')))
-	}
+        /**
+         * Parse a string for matches, and process any template segments that occur.
+         * @method parseString
+         * @param {string} pString - The string to parse.
+         * @param {Object} pParseTree - The parse tree to begin parsing from (usually root)
+         */
+        parseString(pString, pParseTree) {
+          let tmpParserState = this.newParserState(pParseTree);
+          for (var i = 0; i < pString.length; i++) {
+            // TODO: This is not fast.
+            this.parseCharacter(pString[i], tmpParserState);
+          }
+          this.flushOutputBuffer(tmpParserState);
+          return tmpParserState.Output;
+        }
+      }
+      module.exports = StringParser;
+    }, {}],
+    3: [function (require, module, exports) {
+      /**
+      * Word Tree
+      *
+      * @license     MIT
+      *
+      * @author      Steven Velozo <steven@velozo.com>
+      *
+      * @description Create a tree (directed graph) of Javascript objects, one character per object.
+      */
 
-	// Merge some new object into the existing settings.
-	merge(pSettingsFrom, pSettingsTo)
-	{
-		// If an invalid settings from object is passed in (e.g. object constructor without passing in anything) this should still work
-		let tmpSettingsFrom = (typeof(pSettingsFrom) === 'object') ? pSettingsFrom : {};
-		// Default to the settings object if none is passed in for the merge.
-		let tmpSettingsTo = (typeof(pSettingsTo) === 'object') ? pSettingsTo : this.settings;
+      class WordTree {
+        /**
+         * WordTree Constructor
+         */
+        constructor() {
+          this.ParseTree = {};
+        }
 
-		tmpSettingsTo = Object.assign(tmpSettingsTo, tmpSettingsFrom);
+        /** 
+         * Add a child character to a Parse Tree node
+         * @method addChild
+         * @param {Object} pTree - A parse tree to push the characters into
+         * @param {string} pPattern - The string to add to the tree
+         * @param {number} pIndex - The index of the character in the pattern
+         * @returns {Object} The resulting leaf node that was added (or found)
+         * @private
+         */
+        addChild(pTree, pPattern, pIndex) {
+          if (!pTree.hasOwnProperty(pPattern[pIndex])) pTree[pPattern[pIndex]] = {};
+          return pTree[pPattern[pIndex]];
+        }
 
-		return tmpSettingsTo;
-	}
+        /** Add a Pattern to the Parse Tree
+         * @method addPattern
+         * @param {Object} pPatternStart - The starting string for the pattern (e.g. "${")
+         * @param {string} pPatternEnd - The ending string for the pattern (e.g. "}")
+         * @param {number} pParser - The function to parse if this is the matched pattern, once the Pattern End is met.  If this is a string, a simple replacement occurs.
+         * @return {bool} True if adding the pattern was successful
+         */
+        addPattern(pPatternStart, pPatternEnd, pParser) {
+          if (pPatternStart.length < 1) return false;
+          if (typeof pPatternEnd === 'string' && pPatternEnd.length < 1) return false;
+          let tmpLeaf = this.ParseTree;
 
-	// Fill in settings gaps without overwriting settings that are already there
-	fill(pSettingsFrom)
-	{
-		// If an invalid settings from object is passed in (e.g. object constructor without passing in anything) this should still work
-		let tmpSettingsFrom = (typeof(pSettingsFrom) === 'object') ? pSettingsFrom : {};
+          // Add the tree of leaves iteratively
+          for (var i = 0; i < pPatternStart.length; i++) tmpLeaf = this.addChild(tmpLeaf, pPatternStart, i);
+          tmpLeaf.PatternStart = pPatternStart;
+          tmpLeaf.PatternEnd = typeof pPatternEnd === 'string' && pPatternEnd.length > 0 ? pPatternEnd : pPatternStart;
+          tmpLeaf.Parse = typeof pParser === 'function' ? pParser : typeof pParser === 'string' ? () => {
+            return pParser;
+          } : pData => {
+            return pData;
+          };
+          return true;
+        }
+      }
+      module.exports = WordTree;
+    }, {}],
+    4: [function (require, module, exports) {
+      // shim for using process in browser
+      var process = module.exports = {};
 
-		this.settings = Object.assign(tmpSettingsFrom, this.settings);
+      // cached from whatever global is present so that test runners that stub it
+      // don't break things.  But we need to wrap it in a try catch in case it is
+      // wrapped in strict mode code which doesn't define any globals.  It's inside a
+      // function because try/catches deoptimize in certain engines.
 
-		return this.settings;
-	}
-};
+      var cachedSetTimeout;
+      var cachedClearTimeout;
+      function defaultSetTimout() {
+        throw new Error('setTimeout has not been defined');
+      }
+      function defaultClearTimeout() {
+        throw new Error('clearTimeout has not been defined');
+      }
+      (function () {
+        try {
+          if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+          } else {
+            cachedSetTimeout = defaultSetTimout;
+          }
+        } catch (e) {
+          cachedSetTimeout = defaultSetTimout;
+        }
+        try {
+          if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+          } else {
+            cachedClearTimeout = defaultClearTimeout;
+          }
+        } catch (e) {
+          cachedClearTimeout = defaultClearTimeout;
+        }
+      })();
+      function runTimeout(fun) {
+        if (cachedSetTimeout === setTimeout) {
+          //normal enviroments in sane situations
+          return setTimeout(fun, 0);
+        }
+        // if setTimeout wasn't available but was latter defined
+        if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+          cachedSetTimeout = setTimeout;
+          return setTimeout(fun, 0);
+        }
+        try {
+          // when when somebody has screwed with setTimeout but no I.E. maddness
+          return cachedSetTimeout(fun, 0);
+        } catch (e) {
+          try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+          } catch (e) {
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+          }
+        }
+      }
+      function runClearTimeout(marker) {
+        if (cachedClearTimeout === clearTimeout) {
+          //normal enviroments in sane situations
+          return clearTimeout(marker);
+        }
+        // if clearTimeout wasn't available but was latter defined
+        if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+          cachedClearTimeout = clearTimeout;
+          return clearTimeout(marker);
+        }
+        try {
+          // when when somebody has screwed with setTimeout but no I.E. maddness
+          return cachedClearTimeout(marker);
+        } catch (e) {
+          try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+          } catch (e) {
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+          }
+        }
+      }
+      var queue = [];
+      var draining = false;
+      var currentQueue;
+      var queueIndex = -1;
+      function cleanUpNextTick() {
+        if (!draining || !currentQueue) {
+          return;
+        }
+        draining = false;
+        if (currentQueue.length) {
+          queue = currentQueue.concat(queue);
+        } else {
+          queueIndex = -1;
+        }
+        if (queue.length) {
+          drainQueue();
+        }
+      }
+      function drainQueue() {
+        if (draining) {
+          return;
+        }
+        var timeout = runTimeout(cleanUpNextTick);
+        draining = true;
+        var len = queue.length;
+        while (len) {
+          currentQueue = queue;
+          queue = [];
+          while (++queueIndex < len) {
+            if (currentQueue) {
+              currentQueue[queueIndex].run();
+            }
+          }
+          queueIndex = -1;
+          len = queue.length;
+        }
+        currentQueue = null;
+        draining = false;
+        runClearTimeout(timeout);
+      }
+      process.nextTick = function (fun) {
+        var args = new Array(arguments.length - 1);
+        if (arguments.length > 1) {
+          for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+          }
+        }
+        queue.push(new Item(fun, args));
+        if (queue.length === 1 && !draining) {
+          runTimeout(drainQueue);
+        }
+      };
 
-// This is for backwards compatibility
-function autoConstruct(pSettings)
-{
-	return new FableSettings(pSettings);
-}
+      // v8 likes predictible objects
+      function Item(fun, array) {
+        this.fun = fun;
+        this.array = array;
+      }
+      Item.prototype.run = function () {
+        this.fun.apply(null, this.array);
+      };
+      process.title = 'browser';
+      process.browser = true;
+      process.env = {};
+      process.argv = [];
+      process.version = ''; // empty string to avoid regexp issues
+      process.versions = {};
+      function noop() {}
+      process.on = noop;
+      process.addListener = noop;
+      process.once = noop;
+      process.off = noop;
+      process.removeListener = noop;
+      process.removeAllListeners = noop;
+      process.emit = noop;
+      process.prependListener = noop;
+      process.prependOnceListener = noop;
+      process.listeners = function (name) {
+        return [];
+      };
+      process.binding = function (name) {
+        throw new Error('process.binding is not supported');
+      };
+      process.cwd = function () {
+        return '/';
+      };
+      process.chdir = function (dir) {
+        throw new Error('process.chdir is not supported');
+      };
+      process.umask = function () {
+        return 0;
+      };
+    }, {}],
+    5: [function (require, module, exports) {
+      /**
+      * Simple browser shim loader - assign the npm module to a window global automatically
+      *
+      * @license MIT
+      * @author <steven@velozo.com>
+      */
+      var libNPMModuleWrapper = require('./Fable-Settings.js');
+      if (typeof window === 'object' && !window.hasOwnProperty('FableSettings')) {
+        window.FableSettings = libNPMModuleWrapper;
+      }
+      module.exports = libNPMModuleWrapper;
+    }, {
+      "./Fable-Settings.js": 8
+    }],
+    6: [function (require, module, exports) {
+      module.exports = {
+        "Product": "ApplicationNameHere",
+        "ProductVersion": "0.0.0",
+        "ConfigFile": false,
+        "LogStreams": [{
+          "level": "trace"
+        }]
+      };
+    }, {}],
+    7: [function (require, module, exports) {
+      (function (process) {
+        (function () {
+          /**
+          * Fable Settings Template Processor
+          *
+          * This class allows environment variables to come in via templated expressions, and defaults to be set.
+          *
+          * @license MIT
+          *
+          * @author Steven Velozo <steven@velozo.com>
+          * @module Fable Settings
+          */
 
-module.exports = {new:autoConstruct, FableSettings:FableSettings};
+          // Needed to allow environment variables in strings cleanly
+          const libPrecedent = require('precedent');
+          class FableSettingsTemplateProcessor {
+            constructor() {
+              // Use a no-dependencies templating engine to parse out environment variables
+              this.templateProcessor = new libPrecedent();
 
-},{"./Fable-Settings-Default":1}]},{},[2])
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5vZGVfbW9kdWxlcy9icm93c2VyLXBhY2svX3ByZWx1ZGUuanMiLCJzb3VyY2UvRmFibGUtU2V0dGluZ3MtRGVmYXVsdC5qc29uIiwic291cmNlL0ZhYmxlLVNldHRpbmdzLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0FDQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUNiQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EiLCJmaWxlIjoiZ2VuZXJhdGVkLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXNDb250ZW50IjpbIihmdW5jdGlvbigpe2Z1bmN0aW9uIHIoZSxuLHQpe2Z1bmN0aW9uIG8oaSxmKXtpZighbltpXSl7aWYoIWVbaV0pe3ZhciBjPVwiZnVuY3Rpb25cIj09dHlwZW9mIHJlcXVpcmUmJnJlcXVpcmU7aWYoIWYmJmMpcmV0dXJuIGMoaSwhMCk7aWYodSlyZXR1cm4gdShpLCEwKTt2YXIgYT1uZXcgRXJyb3IoXCJDYW5ub3QgZmluZCBtb2R1bGUgJ1wiK2krXCInXCIpO3Rocm93IGEuY29kZT1cIk1PRFVMRV9OT1RfRk9VTkRcIixhfXZhciBwPW5baV09e2V4cG9ydHM6e319O2VbaV1bMF0uY2FsbChwLmV4cG9ydHMsZnVuY3Rpb24ocil7dmFyIG49ZVtpXVsxXVtyXTtyZXR1cm4gbyhufHxyKX0scCxwLmV4cG9ydHMscixlLG4sdCl9cmV0dXJuIG5baV0uZXhwb3J0c31mb3IodmFyIHU9XCJmdW5jdGlvblwiPT10eXBlb2YgcmVxdWlyZSYmcmVxdWlyZSxpPTA7aTx0Lmxlbmd0aDtpKyspbyh0W2ldKTtyZXR1cm4gb31yZXR1cm4gcn0pKCkiLCJtb2R1bGUuZXhwb3J0cz17XG5cdFwiUHJvZHVjdFwiOiBcIkFwcGxpY2F0aW9uTmFtZUhlcmVcIixcblx0XCJQcm9kdWN0VmVyc2lvblwiOiBcIjAuMC4wXCIsXG5cblx0XCJDb25maWdGaWxlXCI6IGZhbHNlLFxuXG5cdFwiTG9nU3RyZWFtc1wiOlxuXHRbXG5cdFx0e1xuXHRcdFx0XCJsZXZlbFwiOiBcInRyYWNlXCJcblx0XHR9XG5cdF1cbn1cbiIsIi8qKlxuKiBGYWJsZSBTZXR0aW5ncyBBZGQtb25cbipcbiogQGxpY2Vuc2UgTUlUXG4qXG4qIEBhdXRob3IgU3RldmVuIFZlbG96byA8c3RldmVuQHZlbG96by5jb20+XG4qIEBtb2R1bGUgRmFibGUgU2V0dGluZ3NcbiovXG5cbi8qKlxuKiBGYWJsZSBTb2x1dGlvbiBTZXR0aW5nc1xuKlxuKiBAY2xhc3MgRmFibGVTZXR0aW5nc1xuKiBAY29uc3RydWN0b3JcbiovXG5cbmNsYXNzIEZhYmxlU2V0dGluZ3Ncbntcblx0Y29uc3RydWN0b3IocEZhYmxlU2V0dGluZ3MpXG5cdHtcblx0XHR0aGlzLmRlZmF1bHQgPSB0aGlzLmJ1aWxkRGVmYXVsdFNldHRpbmdzKCk7XG5cblx0XHQvLyBDb25zdHJ1Y3QgYSBuZXcgc2V0dGluZ3Mgb2JqZWN0XG5cdFx0bGV0IHRtcFNldHRpbmdzID0gdGhpcy5tZXJnZShwRmFibGVTZXR0aW5ncywgdGhpcy5idWlsZERlZmF1bHRTZXR0aW5ncygpKTtcblxuXHRcdC8vIFRoZSBiYXNlIHNldHRpbmdzIG9iamVjdCAod2hhdCB0aGV5IHdlcmUgb24gaW5pdGlhbGl6YXRpb24sIGJlZm9yZSBvdGhlciBhY3RvcnMgaGF2ZSBhbHRlcmVkIHRoZW0pXG5cdFx0dGhpcy5iYXNlID0gSlNPTi5wYXJzZShKU09OLnN0cmluZ2lmeSh0bXBTZXR0aW5ncykpO1xuXG5cdFx0aWYgKHRtcFNldHRpbmdzLkRlZmF1bHRDb25maWdGaWxlKVxuXHRcdHtcblx0XHRcdHRyeVxuXHRcdFx0e1xuXHRcdFx0XHQvLyBJZiB0aGVyZSBpcyBhIERFRkFVTFQgY29uZmlndXJhdGlvbiBmaWxlLCB0cnkgdG8gbG9hZCBhbmQgbWVyZ2UgaXQuXG5cdFx0XHRcdHRtcFNldHRpbmdzID0gdGhpcy5tZXJnZShyZXF1aXJlKHRtcFNldHRpbmdzLkRlZmF1bHRDb25maWdGaWxlKSwgdG1wU2V0dGluZ3MpO1xuXHRcdFx0fVxuXHRcdFx0Y2F0Y2ggKHBFeGNlcHRpb24pXG5cdFx0XHR7XG5cdFx0XHRcdC8vIFdoeSB0aGlzPyAgT2Z0ZW4gZm9yIGFuIGFwcCB3ZSB3YW50IHNldHRpbmdzIHRvIHdvcmsgb3V0IG9mIHRoZSBib3gsIGJ1dFxuXHRcdFx0XHQvLyB3b3VsZCBwb3RlbnRpYWxseSB3YW50IHRvIGhhdmUgYSBjb25maWcgZmlsZSBmb3IgY29tcGxleCBzZXR0aW5ncy5cblx0XHRcdFx0Y29uc29sZS5sb2coJ0ZhYmxlLVNldHRpbmdzIFdhcm5pbmc6IERlZmF1bHQgY29uZmlndXJhdGlvbiBmaWxlIHNwZWNpZmllZCBidXQgdGhlcmUgd2FzIGEgcHJvYmxlbSBsb2FkaW5nIGl0LiAgRmFsbGluZyBiYWNrIHRvIGJhc2UuJyk7XG5cdFx0XHRcdGNvbnNvbGUubG9nKCcgICAgIExvYWRpbmcgRXhjZXB0aW9uOiAnK3BFeGNlcHRpb24pO1xuXHRcdFx0fVxuXHRcdH1cblxuXHRcdGlmICh0bXBTZXR0aW5ncy5Db25maWdGaWxlKVxuXHRcdHtcblx0XHRcdHRyeVxuXHRcdFx0e1xuXHRcdFx0XHQvLyBJZiB0aGVyZSBpcyBhIGNvbmZpZ3VyYXRpb24gZmlsZSwgdHJ5IHRvIGxvYWQgYW5kIG1lcmdlIGl0LlxuXHRcdFx0XHR0bXBTZXR0aW5ncyA9IHRoaXMubWVyZ2UocmVxdWlyZSh0bXBTZXR0aW5ncy5Db25maWdGaWxlKSwgdG1wU2V0dGluZ3MpO1xuXHRcdFx0fVxuXHRcdFx0Y2F0Y2ggKHBFeGNlcHRpb24pXG5cdFx0XHR7XG5cdFx0XHRcdC8vIFdoeSB0aGlzPyAgT2Z0ZW4gZm9yIGFuIGFwcCB3ZSB3YW50IHNldHRpbmdzIHRvIHdvcmsgb3V0IG9mIHRoZSBib3gsIGJ1dFxuXHRcdFx0XHQvLyB3b3VsZCBwb3RlbnRpYWxseSB3YW50IHRvIGhhdmUgYSBjb25maWcgZmlsZSBmb3IgY29tcGxleCBzZXR0aW5ncy5cblx0XHRcdFx0Y29uc29sZS5sb2coJ0ZhYmxlLVNldHRpbmdzIFdhcm5pbmc6IENvbmZpZ3VyYXRpb24gZmlsZSBzcGVjaWZpZWQgYnV0IHRoZXJlIHdhcyBhIHByb2JsZW0gbG9hZGluZyBpdC4gIEZhbGxpbmcgYmFjayB0byBiYXNlLicpO1xuXHRcdFx0XHRjb25zb2xlLmxvZygnICAgICBMb2FkaW5nIEV4Y2VwdGlvbjogJytwRXhjZXB0aW9uKTtcblx0XHRcdH1cblx0XHR9XG5cblx0XHR0aGlzLnNldHRpbmdzID0gdG1wU2V0dGluZ3M7XG5cdH1cblxuXHQvLyBCdWlsZCBhIGRlZmF1bHQgc2V0dGluZ3Mgb2JqZWN0LiAgVXNlIHRoZSBKU09OIGppbW15IHRvIGVuc3VyZSBpdCBpcyBhbHdheXMgYSBuZXcgb2JqZWN0LlxuXHRidWlsZERlZmF1bHRTZXR0aW5ncygpXG5cdHtcblx0XHRyZXR1cm4gSlNPTi5wYXJzZShKU09OLnN0cmluZ2lmeShyZXF1aXJlKCcuL0ZhYmxlLVNldHRpbmdzLURlZmF1bHQnKSkpXG5cdH1cblxuXHQvLyBNZXJnZSBzb21lIG5ldyBvYmplY3QgaW50byB0aGUgZXhpc3Rpbmcgc2V0dGluZ3MuXG5cdG1lcmdlKHBTZXR0aW5nc0Zyb20sIHBTZXR0aW5nc1RvKVxuXHR7XG5cdFx0Ly8gSWYgYW4gaW52YWxpZCBzZXR0aW5ncyBmcm9tIG9iamVjdCBpcyBwYXNzZWQgaW4gKGUuZy4gb2JqZWN0IGNvbnN0cnVjdG9yIHdpdGhvdXQgcGFzc2luZyBpbiBhbnl0aGluZykgdGhpcyBzaG91bGQgc3RpbGwgd29ya1xuXHRcdGxldCB0bXBTZXR0aW5nc0Zyb20gPSAodHlwZW9mKHBTZXR0aW5nc0Zyb20pID09PSAnb2JqZWN0JykgPyBwU2V0dGluZ3NGcm9tIDoge307XG5cdFx0Ly8gRGVmYXVsdCB0byB0aGUgc2V0dGluZ3Mgb2JqZWN0IGlmIG5vbmUgaXMgcGFzc2VkIGluIGZvciB0aGUgbWVyZ2UuXG5cdFx0bGV0IHRtcFNldHRpbmdzVG8gPSAodHlwZW9mKHBTZXR0aW5nc1RvKSA9PT0gJ29iamVjdCcpID8gcFNldHRpbmdzVG8gOiB0aGlzLnNldHRpbmdzO1xuXG5cdFx0dG1wU2V0dGluZ3NUbyA9IE9iamVjdC5hc3NpZ24odG1wU2V0dGluZ3NUbywgdG1wU2V0dGluZ3NGcm9tKTtcblxuXHRcdHJldHVybiB0bXBTZXR0aW5nc1RvO1xuXHR9XG5cblx0Ly8gRmlsbCBpbiBzZXR0aW5ncyBnYXBzIHdpdGhvdXQgb3ZlcndyaXRpbmcgc2V0dGluZ3MgdGhhdCBhcmUgYWxyZWFkeSB0aGVyZVxuXHRmaWxsKHBTZXR0aW5nc0Zyb20pXG5cdHtcblx0XHQvLyBJZiBhbiBpbnZhbGlkIHNldHRpbmdzIGZyb20gb2JqZWN0IGlzIHBhc3NlZCBpbiAoZS5nLiBvYmplY3QgY29uc3RydWN0b3Igd2l0aG91dCBwYXNzaW5nIGluIGFueXRoaW5nKSB0aGlzIHNob3VsZCBzdGlsbCB3b3JrXG5cdFx0bGV0IHRtcFNldHRpbmdzRnJvbSA9ICh0eXBlb2YocFNldHRpbmdzRnJvbSkgPT09ICdvYmplY3QnKSA/IHBTZXR0aW5nc0Zyb20gOiB7fTtcblxuXHRcdHRoaXMuc2V0dGluZ3MgPSBPYmplY3QuYXNzaWduKHRtcFNldHRpbmdzRnJvbSwgdGhpcy5zZXR0aW5ncyk7XG5cblx0XHRyZXR1cm4gdGhpcy5zZXR0aW5ncztcblx0fVxufTtcblxuLy8gVGhpcyBpcyBmb3IgYmFja3dhcmRzIGNvbXBhdGliaWxpdHlcbmZ1bmN0aW9uIGF1dG9Db25zdHJ1Y3QocFNldHRpbmdzKVxue1xuXHRyZXR1cm4gbmV3IEZhYmxlU2V0dGluZ3MocFNldHRpbmdzKTtcbn1cblxubW9kdWxlLmV4cG9ydHMgPSB7bmV3OmF1dG9Db25zdHJ1Y3QsIEZhYmxlU2V0dGluZ3M6RmFibGVTZXR0aW5nc307XG4iXX0=
+              // TODO: Make the environment variable wrap expression demarcation characters configurable?
+              this.templateProcessor.addPattern('${', '}', pTemplateValue => {
+                let tmpTemplateValue = pTemplateValue.trim();
+                let tmpSeparatorIndex = tmpTemplateValue.indexOf('|');
+
+                // If there is no pipe, the default value will end up being whatever the variable name is.
+                let tmpDefaultValue = tmpTemplateValue.substring(tmpSeparatorIndex + 1);
+                let tmpEnvironmentVariableName = tmpSeparatorIndex > -1 ? tmpTemplateValue.substring(0, tmpSeparatorIndex) : tmpTemplateValue;
+                if (process.env.hasOwnProperty(tmpEnvironmentVariableName)) {
+                  return process.env[tmpEnvironmentVariableName];
+                } else {
+                  return tmpDefaultValue;
+                }
+              });
+            }
+            parseSetting(pString) {
+              return this.templateProcessor.parseString(pString);
+            }
+          }
+          module.exports = FableSettingsTemplateProcessor;
+        }).call(this);
+      }).call(this, require('_process'));
+    }, {
+      "_process": 4,
+      "precedent": 1
+    }],
+    8: [function (require, module, exports) {
+      /**
+      * Fable Settings Add-on
+      *
+      * @license MIT
+      *
+      * @author Steven Velozo <steven@velozo.com>
+      * @module Fable Settings
+      */
+      const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
+      class FableSettings {
+        constructor(pFableSettings) {
+          // Initialize the settings value template processor
+          this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
+
+          // set straight away so anything that uses it respects the initial setting
+          this._configureEnvTemplating(pFableSettings);
+          this.default = this.buildDefaultSettings();
+
+          // Construct a new settings object
+          let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
+
+          // The base settings object (what they were on initialization, before other actors have altered them)
+          this.base = JSON.parse(JSON.stringify(tmpSettings));
+          if (tmpSettings.DefaultConfigFile) {
+            try {
+              // If there is a DEFAULT configuration file, try to load and merge it.
+              tmpSettings = this.merge(require(tmpSettings.DefaultConfigFile), tmpSettings);
+            } catch (pException) {
+              // Why this?  Often for an app we want settings to work out of the box, but
+              // would potentially want to have a config file for complex settings.
+              console.log('Fable-Settings Warning: Default configuration file specified but there was a problem loading it.  Falling back to base.');
+              console.log('     Loading Exception: ' + pException);
+            }
+          }
+          if (tmpSettings.ConfigFile) {
+            try {
+              // If there is a configuration file, try to load and merge it.
+              tmpSettings = this.merge(require(tmpSettings.ConfigFile), tmpSettings);
+            } catch (pException) {
+              // Why this?  Often for an app we want settings to work out of the box, but
+              // would potentially want to have a config file for complex settings.
+              console.log('Fable-Settings Warning: Configuration file specified but there was a problem loading it.  Falling back to base.');
+              console.log('     Loading Exception: ' + pException);
+            }
+          }
+          this.settings = tmpSettings;
+        }
+
+        // Build a default settings object.  Use the JSON jimmy to ensure it is always a new object.
+        buildDefaultSettings() {
+          return JSON.parse(JSON.stringify(require('./Fable-Settings-Default')));
+        }
+
+        // Update the configuration for environment variable templating based on the current settings object
+        _configureEnvTemplating(pSettings) {
+          // default environment variable templating to on
+          this._PerformEnvTemplating = !pSettings || pSettings.NoEnvReplacement !== true;
+        }
+
+        // Resolve (recursive) any environment variables found in settings object.
+        _resolveEnv(pSettings) {
+          for (const tmpKey in pSettings) {
+            if (typeof pSettings[tmpKey] === 'object') {
+              this._resolveEnv(pSettings[tmpKey]);
+            } else if (typeof pSettings[tmpKey] === 'string') {
+              pSettings[tmpKey] = this.settingsTemplateProcessor.parseSetting(pSettings[tmpKey]);
+            }
+          }
+        }
+
+        /**
+         * Check to see if a value is an object (but not an array).
+         */
+        _isObject(value) {
+          return typeof value === 'object' && !Array.isArray(value);
+        }
+
+        /**
+         * Merge two plain objects. Keys that are objects in both will be merged property-wise.
+         */
+        _deepMergeObjects(toObject, fromObject) {
+          if (!fromObject || !this._isObject(fromObject)) {
+            return;
+          }
+          Object.keys(fromObject).forEach(key => {
+            const fromValue = fromObject[key];
+            if (this._isObject(fromValue)) {
+              const toValue = toObject[key];
+              if (toValue && this._isObject(toValue)) {
+                // both are objects, so do a recursive merge
+                this._deepMergeObjects(toValue, fromValue);
+                return;
+              }
+            }
+            toObject[key] = fromValue;
+          });
+          return toObject;
+        }
+
+        // Merge some new object into the existing settings.
+        merge(pSettingsFrom, pSettingsTo) {
+          // If an invalid settings from object is passed in (e.g. object constructor without passing in anything) this should still work
+          let tmpSettingsFrom = typeof pSettingsFrom === 'object' ? pSettingsFrom : {};
+          // Default to the settings object if none is passed in for the merge.
+          let tmpSettingsTo = typeof pSettingsTo === 'object' ? pSettingsTo : this.settings;
+
+          // do not mutate the From object property values
+          let tmpSettingsFromCopy = JSON.parse(JSON.stringify(tmpSettingsFrom));
+          tmpSettingsTo = this._deepMergeObjects(tmpSettingsTo, tmpSettingsFromCopy);
+          if (this._PerformEnvTemplating) {
+            this._resolveEnv(tmpSettingsTo);
+          }
+          // Update env tempating config, since we just updated the config object, and it may have changed
+          this._configureEnvTemplating(tmpSettingsTo);
+          return tmpSettingsTo;
+        }
+
+        // Fill in settings gaps without overwriting settings that are already there
+        fill(pSettingsFrom) {
+          // If an invalid settings from object is passed in (e.g. object constructor without passing in anything) this should still work
+          let tmpSettingsFrom = typeof pSettingsFrom === 'object' ? pSettingsFrom : {};
+
+          // do not mutate the From object property values
+          let tmpSettingsFromCopy = JSON.parse(JSON.stringify(tmpSettingsFrom));
+          this.settings = this._deepMergeObjects(tmpSettingsFromCopy, this.settings);
+          return this.settings;
+        }
+      }
+      ;
+
+      // This is for backwards compatibility
+      function autoConstruct(pSettings) {
+        return new FableSettings(pSettings);
+      }
+      module.exports = {
+        new: autoConstruct,
+        FableSettings: FableSettings
+      };
+    }, {
+      "./Fable-Settings-Default": 6,
+      "./Fable-Settings-TemplateProcessor.js": 7
+    }]
+  }, {}, [5])(5);
+});
