@@ -6,14 +6,22 @@
 * @author Steven Velozo <steven@velozo.com>
 * @module Fable Settings
 */
+
+const libPrecedent = require('precedent');
 const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
 
 class FableSettings
 {
 	constructor(pFableSettings)
 	{
+		// Expose the dependencies for downstream re-use
+		this.dependencies = (
+			{
+				precedent: libPrecedent
+			});
+
 		// Initialize the settings value template processor
-		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
+		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor(this.dependencies);
 
 		// set straight away so anything that uses it respects the initial setting
 		this._configureEnvTemplating(pFableSettings);
