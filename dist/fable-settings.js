@@ -514,12 +514,10 @@
           * @module Fable Settings
           */
 
-          // Needed to allow environment variables in strings cleanly
-          const libPrecedent = require('precedent');
           class FableSettingsTemplateProcessor {
-            constructor() {
+            constructor(pDependencies) {
               // Use a no-dependencies templating engine to parse out environment variables
-              this.templateProcessor = new libPrecedent();
+              this.templateProcessor = new pDependencies.precedent();
 
               // TODO: Make the environment variable wrap expression demarcation characters configurable?
               this.templateProcessor.addPattern('${', '}', pTemplateValue => {
@@ -544,8 +542,7 @@
         }).call(this);
       }).call(this, require('_process'));
     }, {
-      "_process": 4,
-      "precedent": 1
+      "_process": 4
     }],
     8: [function (require, module, exports) {
       /**
@@ -556,11 +553,18 @@
       * @author Steven Velozo <steven@velozo.com>
       * @module Fable Settings
       */
+
+      const libPrecedent = require('precedent');
       const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
       class FableSettings {
         constructor(pFableSettings) {
+          // Expose the dependencies for downstream re-use
+          this.dependencies = {
+            precedent: libPrecedent
+          };
+
           // Initialize the settings value template processor
-          this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
+          this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor(this.dependencies);
 
           // set straight away so anything that uses it respects the initial setting
           this._configureEnvTemplating(pFableSettings);
@@ -688,7 +692,8 @@
       };
     }, {
       "./Fable-Settings-Default": 6,
-      "./Fable-Settings-TemplateProcessor.js": 7
+      "./Fable-Settings-TemplateProcessor.js": 7,
+      "precedent": 1
     }]
   }, {}, [5])(5);
 });
