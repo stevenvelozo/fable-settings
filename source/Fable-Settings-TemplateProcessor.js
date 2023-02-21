@@ -1,0 +1,52 @@
+/**
+* Fable Settings Template Processor
+*
+* This class allows environment variables to come in via templated expressions, and defaults to be set.
+*
+* @license MIT
+*
+* @author Steven Velozo <steven@velozo.com>
+* @module Fable Settings
+*/
+
+// Needed to allow environment variables in strings cleanly
+const libPrecedent = require('precedent');
+
+class FableSettingsTemplateProcessor
+{
+	constructor()
+	{
+        // Use a no-dependencies templating engine to parse out environment variables
+		this.templateProcessor = new libPrecedent();
+
+        // TODO: Make the environment variable wrap expression demarcation characters configurable?
+		this.templateProcessor.addPattern('${', '}',
+			(pTemplateValue)=>
+			{
+				let tmpTemplateValue = pTemplateValue.trim();
+
+				let tmpSeparatorIndex = tmpTemplateValue.indexOf('|');
+
+				// If there is no pipe, the default value will end up being whatever the variable name is.
+				let tmpDefaultValue = tmpTemplateValue.substring(tmpSeparatorIndex+1);
+
+				let tmpEnvironmentVariableName = (tmpSeparatorIndex > -1) ? tmpTemplateValue.substring(0, tmpSeparatorIndex) : tmpTemplateValue;
+
+				if (process.env.hasOwnProperty(tmpEnvironmentVariableName))
+				{
+					return process.env[tmpEnvironmentVariableName];
+				}
+				else
+				{
+					return tmpDefaultValue;
+				}
+			});
+    }
+
+    parseSetting(pString)
+    {
+        return this.templateProcessor.parseString(pString);
+    }
+}
+
+module.exports = FableSettingsTemplateProcessor;

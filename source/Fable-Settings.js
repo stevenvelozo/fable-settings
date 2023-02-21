@@ -6,21 +6,15 @@
 * @author Steven Velozo <steven@velozo.com>
 * @module Fable Settings
 */
-
-// needed since String.matchAll wasn't added to node until v12
-const libMatchAll = require('match-all');
-
-/**
-* Fable Solution Settings
-*
-* @class FableSettings
-* @constructor
-*/
+const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
 
 class FableSettings
 {
 	constructor(pFableSettings)
 	{
+		// Initialize the settings value template processor
+		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
+
 		// set straight away so anything that uses it respects the initial setting
 		this._configureEnvTemplating(pFableSettings);
 
@@ -85,30 +79,13 @@ class FableSettings
 	{
 		for (const tmpKey in pSettings)
 		{
-			const tmpValue = pSettings[tmpKey];
-			if (typeof(tmpValue) === 'object') // && !Array.isArray(tmpValue))
+			if (typeof(pSettings[tmpKey]) === 'object')
 			{
-				this._resolveEnv(tmpValue);
+				this._resolveEnv(pSettings[tmpKey]);
 			}
-			else if (typeof(tmpValue) === 'string')
+			else if (typeof(pSettings[tmpKey]) === 'string')
 			{
-				if (tmpValue.indexOf('${') >= 0)
-				{
-					//pick out and resolve env constiables from the settings value.
-					const tmpMatches = libMatchAll(tmpValue, /\$\{(.*?)\}/g).toArray();
-					tmpMatches.forEach((tmpMatch) =>
-					{
-						//format: VAR_NAME|DEFAULT_VALUE
-						const tmpParts = tmpMatch.split('|');
-						let tmpResolvedValue = process.env[tmpParts[0]] || '';
-						if (!tmpResolvedValue && tmpParts.length > 1)
-						{
-							tmpResolvedValue = tmpParts[1];
-						}
-
-						pSettings[tmpKey] = pSettings[tmpKey].replace('${' + tmpMatch + '}', tmpResolvedValue);
-					});
-				}
+				pSettings[tmpKey] = this.settingsTemplateProcessor.parseSetting(pSettings[tmpKey]);
 			}
 		}
 	}
@@ -164,7 +141,7 @@ class FableSettings
 		{
 			this._resolveEnv(tmpSettingsTo);
 		}
-		// update env tempating config, since we just updated the config object, and it may have changed
+		// Update env tempating config, since we just updated the config object, and it may have changed
 		this._configureEnvTemplating(tmpSettingsTo);
 
 		return tmpSettingsTo;

@@ -76,6 +76,15 @@ suite
 				);
 				test
 				(
+					'deep merging with a bad object passed in',
+					function()
+					{
+						var tmpFableSettings = require('../source/Fable-Settings.js').new({Product:'TestProduct1'});
+						Expect(tmpFableSettings._deepMergeObjects({},null)).to.be.undefined;
+					}
+				);
+				test
+				(
 					'manually defining a settings object',
 					function()
 					{
