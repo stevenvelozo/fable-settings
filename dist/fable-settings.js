@@ -686,10 +686,9 @@
       function autoConstruct(pSettings) {
         return new FableSettings(pSettings);
       }
-      module.exports = {
-        new: autoConstruct,
-        FableSettings: FableSettings
-      };
+      module.exports = FableSettings;
+      module.exports.new = autoConstruct;
+      module.exports.precedent = libPrecedent;
     }, {
       "./Fable-Settings-Default": 6,
       "./Fable-Settings-TemplateProcessor.js": 7,

@@ -10,6 +10,8 @@ var Chai = require("chai");
 var Expect = Chai.expect;
 var Assert = Chai.assert;
 
+const libFableSettings = require('../source/Fable-Settings.js');
+
 suite
 (
 	'Fable-Settings',
@@ -32,7 +34,17 @@ suite
 					'initialize should build a happy little object',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new();
+						var tmpFableSettings = new libFableSettings();
+						Expect(tmpFableSettings)
+							.to.be.an('object', 'Fable-Settings should initialize as an object directly from the require statement.');
+					}
+				);
+				test
+				(
+					'legacy initialize should build a happy little object',
+					function()
+					{
+						var tmpFableSettings = libFableSettings.new();
 						Expect(tmpFableSettings)
 							.to.be.an('object', 'Fable-Settings should initialize as an object directly from the require statement.');
 					}
@@ -42,7 +54,7 @@ suite
 					'basic class parameters',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new();
+						var tmpFableSettings = new libFableSettings();
 						Expect(tmpFableSettings).to.have.a.property('default')
 							.that.is.a('object');
 						Expect(tmpFableSettings).to.have.a.property('base')
@@ -65,7 +77,7 @@ suite
 					'passing in a value',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new({Product:'TestProduct1'});
+						var tmpFableSettings = new libFableSettings({Product:'TestProduct1'});
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
@@ -79,7 +91,7 @@ suite
 					'deep merging with a bad object passed in',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new({Product:'TestProduct1'});
+						var tmpFableSettings = new libFableSettings({Product:'TestProduct1'});
 						Expect(tmpFableSettings._deepMergeObjects({},null)).to.be.undefined;
 					}
 				);
@@ -88,7 +100,7 @@ suite
 					'manually defining a settings object',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new();
+						var tmpFableSettings = new libFableSettings();
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
@@ -138,7 +150,7 @@ suite
 					'loading settings from a DEFAULT file',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new({DefaultConfigFile:__dirname+'/DefaultExampleSettings.json'});
+						var tmpFableSettings = new libFableSettings({DefaultConfigFile:__dirname+'/DefaultExampleSettings.json'});
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
@@ -159,7 +171,7 @@ suite
 					'loading settings from a nonexistant DEFAULT file',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new({DefaultConfigFile:__dirname+'/NO_SETTINGS_HERE.json'});
+						var tmpFableSettings = new libFableSettings({DefaultConfigFile:__dirname+'/NO_SETTINGS_HERE.json'});
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
@@ -173,7 +185,7 @@ suite
 					'loading settings from a file',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new(
+						var tmpFableSettings = new libFableSettings(
 							{
 								DefaultConfigFile:__dirname+'/DefaultExampleSettings.json',
 								ConfigFile:__dirname+'/ExampleSettings.json'
@@ -201,7 +213,7 @@ suite
 					'loading settings from a nonexistant file',
 					function()
 					{
-						var tmpFableSettings = require('../source/Fable-Settings.js').new({ConfigFile:__dirname+'/NO_SETTINGS_HERE.json'});
+						var tmpFableSettings = new libFableSettings({ConfigFile:__dirname+'/NO_SETTINGS_HERE.json'});
 						Expect(tmpFableSettings).to.have.a.property('settings')
 							.that.is.a('object');
 						Expect(tmpFableSettings.settings).to.have.a.property('Product')
@@ -217,7 +229,7 @@ suite
 					{
 						process.env['NOT_DEFAULT'] = 'found_value';
 
-						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						const tmpFableSettings = new libFableSettings(
 						{
 							DefaultConfigFile: `${__dirname}/DefaultExampleSettings.json`,
 							ConfigFile: `${__dirname}/ExampleSettings.json`
@@ -249,7 +261,7 @@ suite
 					{
 						process.env['NOT_DEFAULT'] = 'found_value';
 
-						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						const tmpFableSettings = new libFableSettings(
 						{
 							NoEnvReplacement: true,
 							DefaultConfigFile: `${__dirname}/DefaultExampleSettings.json`,
@@ -282,7 +294,7 @@ suite
 					{
 						process.env['NOT_DEFAULT'] = 'found_value';
 
-						const tmpFableSettings = require('../source/Fable-Settings.js').new(
+						const tmpFableSettings = new libFableSettings(
 						{
 							EnvReplaced: '${NOT_DEFAULT|waffle}',
 							DefaultConfigFile: `${__dirname}/DisableEnvReplacement.json`,
