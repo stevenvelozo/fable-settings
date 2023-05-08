@@ -46,6 +46,59 @@
   }()({
     1: [function (require, module, exports) {
       /**
+      * Fable Core Pre-initialization Service Base
+      *
+      * For a couple services, we need to be able to instantiate them before the Fable object is fully initialized.
+      * This is a base class for those services.
+      *
+      * @license MIT
+      * @author <steven@velozo.com>
+      */
+
+      class FableCoreServiceProviderBase {
+        constructor(pOptions, pServiceHash) {
+          this.fable = false;
+          this.options = typeof pOptions === 'object' ? pOptions : {};
+          this.serviceType = 'Unknown';
+
+          // The hash will be a non-standard UUID ... the UUID service uses this base class!
+          this.UUID = `CORESVC-${Math.floor(Math.random() * (99999 - 10000) + 10000)}`;
+          this.Hash = typeof pServiceHash === 'string' ? pServiceHash : `${this.UUID}`;
+        }
+        static isFableService = true;
+
+        // After fable is initialized, it would be expected to be wired in as a normal service.
+        connectFable(pFable) {
+          this.fable = pFable;
+          return true;
+        }
+      }
+      module.exports = FableCoreServiceProviderBase;
+    }, {}],
+    2: [function (require, module, exports) {
+      /**
+      * Fable Service Base
+      * @license MIT
+      * @author <steven@velozo.com>
+      */
+
+      class FableServiceProviderBase {
+        constructor(pFable, pOptions, pServiceHash) {
+          this.fable = pFable;
+          this.options = typeof pOptions === 'object' ? pOptions : {};
+          this.serviceType = 'Unknown';
+          this.UUID = pFable.getUUID();
+          this.Hash = typeof pServiceHash === 'string' ? pServiceHash : `${this.UUID}`;
+        }
+        static isFableService = true;
+      }
+      module.exports = FableServiceProviderBase;
+      module.exports.CoreServiceProviderBase = require('./Fable-ServiceProviderBase-Preinit.js');
+    }, {
+      "./Fable-ServiceProviderBase-Preinit.js": 1
+    }],
+    3: [function (require, module, exports) {
+      /**
       * Precedent Meta-Templating
       *
       * @license     MIT
@@ -82,18 +135,19 @@
          * Parse a string with the existing parse tree
          * @method parseString
          * @param {string} pString - The string to parse
+         * @param {object} pData - Data to pass in as the second argument
          * @return {string} The result from the parser
          */
-        parseString(pString) {
-          return this.StringParser.parseString(pString, this.ParseTree);
+        parseString(pString, pData) {
+          return this.StringParser.parseString(pString, this.ParseTree, pData);
         }
       }
       module.exports = Precedent;
     }, {
-      "./StringParser.js": 2,
-      "./WordTree.js": 3
+      "./StringParser.js": 4,
+      "./WordTree.js": 5
     }],
-    2: [function (require, module, exports) {
+    4: [function (require, module, exports) {
       /**
       * String Parser
       *
@@ -175,11 +229,11 @@
          * @param {Object} pParserState - The state object for the current parsing task
          * @private
          */
-        checkPatternEnd(pParserState) {
+        checkPatternEnd(pParserState, pData) {
           if (pParserState.OutputBuffer.length >= pParserState.Pattern.PatternEnd.length + pParserState.Pattern.PatternStart.length && pParserState.OutputBuffer.substr(-pParserState.Pattern.PatternEnd.length) === pParserState.Pattern.PatternEnd) {
             // ... this is the end of a pattern, cut off the end tag and parse it.
             // Trim the start and end tags off the output buffer now
-            pParserState.OutputBuffer = pParserState.Pattern.Parse(pParserState.OutputBuffer.substr(pParserState.Pattern.PatternStart.length, pParserState.OutputBuffer.length - (pParserState.Pattern.PatternStart.length + pParserState.Pattern.PatternEnd.length)));
+            pParserState.OutputBuffer = pParserState.Pattern.Parse(pParserState.OutputBuffer.substr(pParserState.Pattern.PatternStart.length, pParserState.OutputBuffer.length - (pParserState.Pattern.PatternStart.length + pParserState.Pattern.PatternEnd.length)), pData);
             // Flush the output buffer.
             this.flushOutputBuffer(pParserState);
             // End pattern mode
@@ -195,7 +249,7 @@
          * @param {Object} pParserState - The state object for the current parsing task
          * @private
          */
-        parseCharacter(pCharacter, pParserState) {
+        parseCharacter(pCharacter, pParserState, pData) {
           // (1) If we aren't in a pattern match, and we aren't potentially matching, and this may be the start of a new pattern....
           if (!pParserState.PatternMatch && pParserState.ParseTree.hasOwnProperty(pCharacter)) {
             // ... assign the node as the matched node.
@@ -212,7 +266,7 @@
             this.appendOutputBuffer(pCharacter, pParserState);
             if (pParserState.Pattern) {
               // ... Check if this is the end of the pattern (if we are matching a valid pattern)...
-              this.checkPatternEnd(pParserState);
+              this.checkPatternEnd(pParserState, pData);
             }
           }
           // (3) If we aren't in a pattern match or pattern, and this isn't the start of a new pattern (RAW mode)....
@@ -226,12 +280,13 @@
          * @method parseString
          * @param {string} pString - The string to parse.
          * @param {Object} pParseTree - The parse tree to begin parsing from (usually root)
+         * @param {Object} pData - The data to pass to the function as a second paramter
          */
-        parseString(pString, pParseTree) {
+        parseString(pString, pParseTree, pData) {
           let tmpParserState = this.newParserState(pParseTree);
           for (var i = 0; i < pString.length; i++) {
             // TODO: This is not fast.
-            this.parseCharacter(pString[i], tmpParserState);
+            this.parseCharacter(pString[i], tmpParserState, pData);
           }
           this.flushOutputBuffer(tmpParserState);
           return tmpParserState.Output;
@@ -239,7 +294,7 @@
       }
       module.exports = StringParser;
     }, {}],
-    3: [function (require, module, exports) {
+    5: [function (require, module, exports) {
       /**
       * Word Tree
       *
@@ -298,7 +353,7 @@
       }
       module.exports = WordTree;
     }, {}],
-    4: [function (require, module, exports) {
+    6: [function (require, module, exports) {
       // shim for using process in browser
       var process = module.exports = {};
 
@@ -475,7 +530,7 @@
         return 0;
       };
     }, {}],
-    5: [function (require, module, exports) {
+    7: [function (require, module, exports) {
       /**
       * Simple browser shim loader - assign the npm module to a window global automatically
       *
@@ -488,9 +543,9 @@
       }
       module.exports = libNPMModuleWrapper;
     }, {
-      "./Fable-Settings.js": 8
+      "./Fable-Settings.js": 10
     }],
-    6: [function (require, module, exports) {
+    8: [function (require, module, exports) {
       module.exports = {
         "Product": "ApplicationNameHere",
         "ProductVersion": "0.0.0",
@@ -500,7 +555,7 @@
         }]
       };
     }, {}],
-    7: [function (require, module, exports) {
+    9: [function (require, module, exports) {
       (function (process) {
         (function () {
           /**
@@ -513,11 +568,11 @@
           * @author Steven Velozo <steven@velozo.com>
           * @module Fable Settings
           */
-
+          const libPrecedent = require('precedent');
           class FableSettingsTemplateProcessor {
             constructor(pDependencies) {
               // Use a no-dependencies templating engine to parse out environment variables
-              this.templateProcessor = new pDependencies.precedent();
+              this.templateProcessor = new libPrecedent();
 
               // TODO: Make the environment variable wrap expression demarcation characters configurable?
               this.templateProcessor.addPattern('${', '}', pTemplateValue => {
@@ -542,9 +597,10 @@
         }).call(this);
       }).call(this, require('_process'));
     }, {
-      "_process": 4
+      "_process": 6,
+      "precedent": 3
     }],
-    8: [function (require, module, exports) {
+    10: [function (require, module, exports) {
       /**
       * Fable Settings Add-on
       *
@@ -554,24 +610,22 @@
       * @module Fable Settings
       */
 
-      const libPrecedent = require('precedent');
+      const libFableServiceProviderBase = require('fable-serviceproviderbase').CoreServiceProviderBase;
       const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
-      class FableSettings {
-        constructor(pFableSettings) {
-          // Expose the dependencies for downstream re-use
-          this.dependencies = {
-            precedent: libPrecedent
-          };
+      class FableSettings extends libFableServiceProviderBase {
+        constructor(pSettings, pServiceHash) {
+          super(pSettings, pServiceHash);
+          this.serviceType = 'SettingsManager';
 
           // Initialize the settings value template processor
-          this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor(this.dependencies);
+          this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
 
           // set straight away so anything that uses it respects the initial setting
-          this._configureEnvTemplating(pFableSettings);
+          this._configureEnvTemplating(pSettings);
           this.default = this.buildDefaultSettings();
 
           // Construct a new settings object
-          let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
+          let tmpSettings = this.merge(pSettings, this.buildDefaultSettings());
 
           // The base settings object (what they were on initialization, before other actors have altered them)
           this.base = JSON.parse(JSON.stringify(tmpSettings));
@@ -688,11 +742,10 @@
       }
       module.exports = FableSettings;
       module.exports.new = autoConstruct;
-      module.exports.precedent = libPrecedent;
     }, {
-      "./Fable-Settings-Default": 6,
-      "./Fable-Settings-TemplateProcessor.js": 7,
-      "precedent": 1
+      "./Fable-Settings-Default": 8,
+      "./Fable-Settings-TemplateProcessor.js": 9,
+      "fable-serviceproviderbase": 2
     }]
-  }, {}, [5])(5);
+  }, {}, [7])(7);
 });

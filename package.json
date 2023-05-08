@@ -1,6 +1,6 @@
 {
   "name": "fable-settings",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A simple, tolerant configuration chain.",
   "main": "source/Fable-Settings.js",
   "scripts": {
@@ -56,6 +56,7 @@
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
+    "fable-serviceproviderbase": "^3.0.2",
     "precedent": "^1.0.9"
   }
 }

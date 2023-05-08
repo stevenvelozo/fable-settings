@@ -7,29 +7,28 @@
 * @module Fable Settings
 */
 
-const libPrecedent = require('precedent');
+const libFableServiceProviderBase = require('fable-serviceproviderbase').CoreServiceProviderBase;
+
 const libFableSettingsTemplateProcessor = require('./Fable-Settings-TemplateProcessor.js');
 
-class FableSettings
+class FableSettings extends libFableServiceProviderBase
 {
-	constructor(pFableSettings)
+	constructor(pSettings, pServiceHash)
 	{
-		// Expose the dependencies for downstream re-use
-		this.dependencies = (
-			{
-				precedent: libPrecedent
-			});
+		super(pSettings, pServiceHash);
+
+		this.serviceType = 'SettingsManager';
 
 		// Initialize the settings value template processor
-		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor(this.dependencies);
+		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
 
 		// set straight away so anything that uses it respects the initial setting
-		this._configureEnvTemplating(pFableSettings);
+		this._configureEnvTemplating(pSettings);
 
 		this.default = this.buildDefaultSettings();
 
 		// Construct a new settings object
-		let tmpSettings = this.merge(pFableSettings, this.buildDefaultSettings());
+		let tmpSettings = this.merge(pSettings, this.buildDefaultSettings());
 
 		// The base settings object (what they were on initialization, before other actors have altered them)
 		this.base = JSON.parse(JSON.stringify(tmpSettings));
@@ -178,4 +177,3 @@ function autoConstruct(pSettings)
 
 module.exports = FableSettings;
 module.exports.new = autoConstruct;
-module.exports.precedent = libPrecedent;

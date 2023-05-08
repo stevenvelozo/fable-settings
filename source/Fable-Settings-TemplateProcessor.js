@@ -8,13 +8,14 @@
 * @author Steven Velozo <steven@velozo.com>
 * @module Fable Settings
 */
+const libPrecedent = require('precedent');
 
 class FableSettingsTemplateProcessor
 {
 	constructor(pDependencies)
 	{
         // Use a no-dependencies templating engine to parse out environment variables
-		this.templateProcessor = new pDependencies.precedent();
+		this.templateProcessor = new libPrecedent();
 
         // TODO: Make the environment variable wrap expression demarcation characters configurable?
 		this.templateProcessor.addPattern('${', '}',
