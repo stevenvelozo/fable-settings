@@ -3,7 +3,6 @@
 *
 * This class allows environment variables to come in via templated expressions, and defaults to be set.
 *
-* @license MIT
 *
 * @author Steven Velozo <steven@velozo.com>
 * @module Fable Settings

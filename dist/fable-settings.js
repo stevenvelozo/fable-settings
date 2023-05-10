@@ -534,7 +534,6 @@
       /**
       * Simple browser shim loader - assign the npm module to a window global automatically
       *
-      * @license MIT
       * @author <steven@velozo.com>
       */
       var libNPMModuleWrapper = require('./Fable-Settings.js');
@@ -563,7 +562,6 @@
           *
           * This class allows environment variables to come in via templated expressions, and defaults to be set.
           *
-          * @license MIT
           *
           * @author Steven Velozo <steven@velozo.com>
           * @module Fable Settings
@@ -604,7 +602,6 @@
       /**
       * Fable Settings Add-on
       *
-      * @license MIT
       *
       * @author Steven Velozo <steven@velozo.com>
       * @module Fable Settings

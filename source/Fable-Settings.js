@@ -1,7 +1,6 @@
 /**
 * Fable Settings Add-on
 *
-* @license MIT
 *
 * @author Steven Velozo <steven@velozo.com>
 * @module Fable Settings
