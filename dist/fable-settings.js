@@ -51,7 +51,6 @@
       * For a couple services, we need to be able to instantiate them before the Fable object is fully initialized.
       * This is a base class for those services.
       *
-      * @license MIT
       * @author <steven@velozo.com>
       */
 
@@ -78,16 +77,19 @@
     2: [function (require, module, exports) {
       /**
       * Fable Service Base
-      * @license MIT
       * @author <steven@velozo.com>
       */
 
       class FableServiceProviderBase {
         constructor(pFable, pOptions, pServiceHash) {
           this.fable = pFable;
-          this.options = typeof pOptions === 'object' ? pOptions : {};
+          this.options = typeof pOptions === 'object' ? pOptions : typeof pFable === 'object' && !pFable.isFable ? pFable : {};
           this.serviceType = 'Unknown';
-          this.UUID = pFable.getUUID();
+          if (typeof pFable.getUUID == 'function') {
+            this.UUID = pFable.getUUID();
+          } else {
+            this.UUID = `NoFABLESVC-${Math.floor(Math.random() * (99999 - 10000) + 10000)}`;
+          }
           this.Hash = typeof pServiceHash === 'string' ? pServiceHash : `${this.UUID}`;
         }
         static isFableService = true;
@@ -150,11 +152,7 @@
     4: [function (require, module, exports) {
       /**
       * String Parser
-      *
-      * @license     MIT
-      *
       * @author      Steven Velozo <steven@velozo.com>
-      *
       * @description Parse a string, properly processing each matched token in the word tree.
       */
 
@@ -174,6 +172,7 @@
         newParserState(pParseTree) {
           return {
             ParseTree: pParseTree,
+            Asynchronous: false,
             Output: '',
             OutputBuffer: '',
             Pattern: false,
@@ -280,12 +279,11 @@
          * @method parseString
          * @param {string} pString - The string to parse.
          * @param {Object} pParseTree - The parse tree to begin parsing from (usually root)
-         * @param {Object} pData - The data to pass to the function as a second paramter
+         * @param {Object} pData - The data to pass to the function as a second parameter
          */
         parseString(pString, pParseTree, pData) {
           let tmpParserState = this.newParserState(pParseTree);
           for (var i = 0; i < pString.length; i++) {
-            // TODO: This is not fast.
             this.parseCharacter(pString[i], tmpParserState, pData);
           }
           this.flushOutputBuffer(tmpParserState);
@@ -297,11 +295,7 @@
     5: [function (require, module, exports) {
       /**
       * Word Tree
-      *
-      * @license     MIT
-      *
       * @author      Steven Velozo <steven@velozo.com>
-      *
       * @description Create a tree (directed graph) of Javascript objects, one character per object.
       */
 
@@ -313,7 +307,7 @@
           this.ParseTree = {};
         }
 
-        /** 
+        /**
          * Add a child character to a Parse Tree node
          * @method addChild
          * @param {Object} pTree - A parse tree to push the characters into
