@@ -16,6 +16,7 @@
 	"MongoDBURL":"mongodb://127.0.0.1/Fable",
 
 	"Environment": "${NOT_DEFAULT|default}-${USE_DEFAULT|default}",
+	"EnvironmentNoDefault": "${NOT_DEFAULT}-${USE_DEFAULT}",
 
 	"EnvArray": [ "${NOT_DEFAULT|default}", "${USE_DEFAULT|default}" ],
 

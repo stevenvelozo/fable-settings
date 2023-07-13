@@ -24,8 +24,7 @@ class FableSettingsTemplateProcessor
 
 				let tmpSeparatorIndex = tmpTemplateValue.indexOf('|');
 
-				// If there is no pipe, the default value will end up being whatever the variable name is.
-				let tmpDefaultValue = tmpTemplateValue.substring(tmpSeparatorIndex+1);
+				const tmpDefaultValue = tmpSeparatorIndex >= 0 ? tmpTemplateValue.substring(tmpSeparatorIndex+1) : '';
 
 				let tmpEnvironmentVariableName = (tmpSeparatorIndex > -1) ? tmpTemplateValue.substring(0, tmpSeparatorIndex) : tmpTemplateValue;
 
