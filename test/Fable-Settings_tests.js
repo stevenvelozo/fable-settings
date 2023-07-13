@@ -240,6 +240,10 @@ suite
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Environment)
 							.to.equal('found_value-default');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvironmentNoDefault')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.EnvironmentNoDefault)
+							.to.equal('found_value-');
 						Expect(tmpFableSettings.settings).to.have.a.property('EnvArray')
 							.that.is.an('array');
 						Expect(tmpFableSettings.settings.EnvArray)
@@ -273,6 +277,10 @@ suite
 							.that.is.a('string');
 						Expect(tmpFableSettings.settings.Environment)
 							.to.equal('${NOT_DEFAULT|default}-${USE_DEFAULT|default}');
+						Expect(tmpFableSettings.settings).to.have.a.property('EnvironmentNoDefault')
+							.that.is.a('string');
+						Expect(tmpFableSettings.settings.EnvironmentNoDefault)
+							.to.equal('${NOT_DEFAULT}-${USE_DEFAULT}');
 						Expect(tmpFableSettings.settings).to.have.a.property('EnvArray')
 							.that.is.an('array');
 						Expect(tmpFableSettings.settings.EnvArray)
