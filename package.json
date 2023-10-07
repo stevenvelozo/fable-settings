@@ -44,7 +44,7 @@
   "homepage": "https://github.com/stevenvelozo/fable-settings",
   "devDependencies": {
     "browserify": "^17.0.0",
-    "chai": "4.3.7",
+    "chai": "4.3.10",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-sourcemaps": "^3.0.0",
@@ -56,7 +56,7 @@
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
-    "fable-serviceproviderbase": "^3.0.4",
-    "precedent": "^1.0.14"
+    "fable-serviceproviderbase": "^3.0.12",
+    "precedent": "^1.0.15"
   }
 }
