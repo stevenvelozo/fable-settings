@@ -5,7 +5,7 @@
 */
 var libNPMModuleWrapper = require('./Fable-Settings.js');
 
-if ((typeof(window) === 'object') && !window.hasOwnProperty('FableSettings'))
+if ((typeof(window) === 'object') && !('FableSettings' in window))
 {
 	window.FableSettings = libNPMModuleWrapper;
 }

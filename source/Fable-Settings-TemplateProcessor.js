@@ -28,7 +28,7 @@ class FableSettingsTemplateProcessor
 
 				let tmpEnvironmentVariableName = (tmpSeparatorIndex > -1) ? tmpTemplateValue.substring(0, tmpSeparatorIndex) : tmpTemplateValue;
 
-				if (process.env.hasOwnProperty(tmpEnvironmentVariableName))
+				if (tmpEnvironmentVariableName in process.env)
 				{
 					return process.env[tmpEnvironmentVariableName];
 				}
