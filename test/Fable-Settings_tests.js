@@ -17,12 +17,7 @@ suite
 	'Fable-Settings',
 	function()
 	{
-		setup
-		(
-			function()
-			{
-			}
-		);
+		setup(()=>{});
 
 		suite
 		(
@@ -37,6 +32,10 @@ suite
 						var tmpFableSettings = new libFableSettings();
 						Expect(tmpFableSettings)
 							.to.be.an('object', 'Fable-Settings should initialize as an object directly from the require statement.');
+						Expect(tmpFableSettings._PackageFableServiceProvider).to.be.an('object', 'Fable-Log should have a _PackageFableServiceProvider object.');
+						Expect(tmpFableSettings._PackageFableServiceProvider.name).equal('fable-serviceproviderbase', 'Fable-Log _PackageFableServiceProvider.package.name should be set.');
+						Expect(tmpFableSettings._Package).to.be.an('object', 'Fable-Settings should have a _Package object.');
+						Expect(tmpFableSettings._Package.name).to.equal('fable-settings', 'Fable-Settings _Package.package.name should be set.');
 					}
 				);
 				test

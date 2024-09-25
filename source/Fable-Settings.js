@@ -18,6 +18,8 @@ class FableSettings extends libFableServiceProviderBase
 
 		this.serviceType = 'SettingsManager';
 
+		this._Package = require('../package.json');
+
 		// Initialize the settings value template processor
 		this.settingsTemplateProcessor = new libFableSettingsTemplateProcessor();
 
