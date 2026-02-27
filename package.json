@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node source/Fable-Settings.js",
     "coverage": "npx quack coverage",
-    "test": "npx mocha -u tdd --exit -R spec",
+    "test": "npx quack test",
     "build": "npx quack build",
     "docker-dev-build-image": "docker build ./ -f Dockerfile_LUXURYCode -t retold/fable-settings:local",
     "docker-dev-run": "docker run -it -d --name retold-fable-settings-dev -p 30003:8080 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/fable-settings\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" retold/fable-settings:local"
