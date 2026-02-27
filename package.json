@@ -1,6 +1,6 @@
 {
   "name": "fable-settings",
-  "version": "3.0.15",
+  "version": "3.0.16",
   "description": "A simple, tolerant configuration chain.",
   "main": "source/Fable-Settings.js",
   "scripts": {
@@ -46,7 +46,7 @@
     "quackage": "^1.0.58"
   },
   "dependencies": {
-    "fable-serviceproviderbase": "^3.0.17",
-    "precedent": "^1.0.15"
+    "fable-serviceproviderbase": "^3.0.19",
+    "precedent": "^1.0.17"
   }
 }
