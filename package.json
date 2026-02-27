@@ -5,9 +5,9 @@
   "main": "source/Fable-Settings.js",
   "scripts": {
     "start": "node source/Fable-Settings.js",
-    "coverage": "./node_modules/.bin/nyc --reporter=lcov --reporter=text-lcov ./node_modules/mocha/bin/_mocha -- -u tdd -R spec",
-    "test": "./node_modules/.bin/mocha -u tdd -R spec",
-    "build": "./node_modules/.bin/gulp build",
+    "coverage": "npx quack coverage",
+    "test": "npx mocha -u tdd --exit -R spec",
+    "build": "npx quack build",
     "docker-dev-build-image": "docker build ./ -f Dockerfile_LUXURYCode -t retold/fable-settings:local",
     "docker-dev-run": "docker run -it -d --name retold-fable-settings-dev -p 30003:8080 -v \"$PWD/.config:/home/coder/.config\"  -v \"$PWD:/home/coder/fable-settings\" -u \"$(id -u):$(id -g)\" -e \"DOCKER_USER=$USER\" retold/fable-settings:local"
   },
