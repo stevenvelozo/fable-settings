@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/stevenvelozo/fable-settings",
   "devDependencies": {
-    "quackage": "^1.0.51"
+    "quackage": "^1.0.58"
   },
   "dependencies": {
     "fable-serviceproviderbase": "^3.0.17",
