@@ -1,6 +1,6 @@
 # Fable Settings
 
-A simple, tolerant configuration chain for Fable applications. Merges default settings, constructor overrides, JSON config files, and environment variables into a single settings object — with deep merge, fill-without-overwrite, and `${ENV_VAR|default}` template syntax.
+A simple, tolerant configuration chain for Fable applications. Merges default settings, constructor overrides, JSON config files, and environment variables into a single settings object -- with deep merge, fill-without-overwrite, and `${ENV_VAR|default}` template syntax.
 
 [![Build Status](https://github.com/stevenvelozo/fable-settings/workflows/Fable-Settings/badge.svg)](https://github.com/stevenvelozo/fable-settings/actions)
 [![npm version](https://badge.fury.io/js/fable-settings.svg)](https://badge.fury.io/js/fable-settings)
@@ -60,12 +60,12 @@ let settings = require('fable-settings').new(
 
 Settings are resolved in the following order (later sources overwrite earlier ones):
 
-1. **Built-in defaults** — `Product`, `ProductVersion`, `ConfigFile`, `LogStreams`
-2. **Constructor settings** — the object passed to `new FableSettings(pSettings)`
-3. **Default config file** — if `DefaultConfigFile` is set, loaded and merged
-4. **Config file** — if `ConfigFile` is set, loaded and merged
+1. **Built-in defaults** -- `Product`, `ProductVersion`, `ConfigFile`, `LogStreams`
+2. **Constructor settings** -- the object passed to `new FableSettings(pSettings)`
+3. **Default config file** -- if `DefaultConfigFile` is set, loaded and merged
+4. **Config file** -- if `ConfigFile` is set, loaded and merged
 
-Config file loading is fault-tolerant — if a file cannot be loaded, a warning is logged and the previous settings are preserved.
+Config file loading is fault-tolerant -- if a file cannot be loaded, a warning is logged and the previous settings are preserved.
 
 ### Default Settings
 
